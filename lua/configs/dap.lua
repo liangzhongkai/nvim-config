@@ -1,29 +1,49 @@
 local dap = require("dap")
+
+-- codelldb
 dap.adapters.codelldb = {
-    type = "server",
-    port = "${port}",
-    executable = {
-        command = vim.fn.stdpath("data") .. "/mason/bin/codelldb", -- Mason 安装路径
-        args = { "--port", "${port}" },
-    },
+    type = "executable",
+    command = vim.fn.stdpath("data") .. "/mason/bin/codelldb", -- Mason 安装路径
+    -- On windows you may have to uncomment this:
+    -- detached = false,
 }
+-- dap.adapters.codelldb = {
+--     type = "server",
+--     port = "${port}",
+--     executable = {
+--         command = vim.fn.stdpath("data") .. "/mason/bin/codelldb", -- Mason 安装路径
+--         args = { "--port", "${port}", "--log-dir", "/tmp/codelldb_logs" },
+--     },
+-- }
 -- C++ 调试配置
 dap.configurations.cpp = {
+    -- {
+    --     name = "Launch",
+    --     type = "codelldb",
+    --     request = "launch",
+    --     program = "${workspaceFolder}/" .. vim.fn.expand("%:t:r"),
+    --     args = {},
+    --     cwd = '${workspaceFolder}',
+    --     -- stopOnEntry = true, -- cause coredump in ld-x86_64...so
+    -- },
     {
         name = "File Build and Launch",
         type = "codelldb",
         request = "launch",
         program = function()
-            local src = vim.fn.expand("%:p")
+            -- local src = vim.fn.expand("%:p")
+            local src = vim.fn.expand("%:t")
+            -- local output = vim.fn.expand("%:t:r")
             -- 自动编译当前目录下的 main.cpp
-            local output = vim.fn.input(
-                "🔧 Output executable path: ",
-                vim.fn.getcwd() .. "/",
-                "file"
-            )
+            local output = vim.fn.getcwd() .. "/" .. vim.fn.expand("%:t:r")
+            -- local output = vim.fn.input(
+            --     "🔧 Output executable path: ",
+            --     vim.fn.getcwd() .. "/",
+            --     "file"
+            -- )
 
             -- 编译命令（你可以按需替换）
-            local compile_cmd = "g++ -fverbose-asm  -fomit-frame-pointer -g -std=c++2a -O2 "
+            local compile_cmd = "g++ -g -std=c++2a -O0 "
                 .. " -W -Wall -Werror -Wextra -Wno-unused-parameter -lpthread -lbenchmark -fcoroutines "
                 .. src
                 .. " -o "
@@ -44,8 +64,11 @@ dap.configurations.cpp = {
             return output
         end,
         cwd = "${workspaceFolder}",
-        stopOnEntry = true,
+        -- stopOnEntry = true, -- cause coredump in ld-x86_64...so
         args = {},
+        env = {
+            ["LD_DEBUG"] = "libs", -- 可选：增强动态链接诊断
+        },
     },
     {
         name = "Proj Build and Launch",
@@ -60,7 +83,8 @@ dap.configurations.cpp = {
             )
 
             -- 编译命令（你可以按需替换）
-            local compile_cmd = "cmake --build build --config Release"
+            -- local compile_cmd = "cmake -B build -DCMAKE_BUILD_TYPE=Debug cmake --build build --config Debug"
+            local compile_cmd = "./dbuild.sh"
             print("[DAP] Compiling with: " .. compile_cmd)
             local result = os.execute(compile_cmd)
 
@@ -77,7 +101,7 @@ dap.configurations.cpp = {
             return output
         end,
         cwd = "${workspaceFolder}",
-        stopOnEntry = true,
+        -- stopOnEntry = true, -- cause coredump in ld-x86_64...so
         args = {},
     },
     {
@@ -92,7 +116,7 @@ dap.configurations.cpp = {
             )
         end,
         cwd = "${workspaceFolder}",
-        stopOnEntry = true,
+        -- stopOnEntry = true, -- cause coredump in ld-x86_64...so
         args = {},
     },
     {
@@ -125,15 +149,21 @@ dap.configurations.cpp = {
             )
         end,
         cwd = "${workspaceFolder}",
+        -- sourceMap = {
+        --     -- 编译路径→本地源码[7](@ref)
+        --     ["/build/server/path"] = "${workspaceFolder}/src",
+        -- },
     },
 }
+
+-- gdb
 -- dap.adapters.gdb = {
 --     type = "executable",
 --     command = "/usr/bin/gdb",
 --     args = { "--interpreter=dap", "--eval-command", "set print pretty on" },
 -- }
 --
--- dap.configurations.c = {
+-- dap.configurations.cpp = {
 --     {
 --         name = "Launch",
 --         type = "gdb",
@@ -180,5 +210,7 @@ dap.configurations.cpp = {
 --         cwd = "${workspaceFolder}",
 --     },
 -- }
+
+-- cpp to c and rust
 dap.configurations.c = dap.configurations.cpp
 dap.configurations.rust = dap.configurations.cpp
