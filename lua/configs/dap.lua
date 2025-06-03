@@ -66,9 +66,17 @@ dap.configurations.cpp = {
         cwd = "${workspaceFolder}",
         -- stopOnEntry = true, -- cause coredump in ld-x86_64...so
         args = {},
-        env = {
-            ["LD_DEBUG"] = "libs", -- 可选：增强动态链接诊断
-        },
+        -- externalConsole = true,
+        -- env = {
+        --     ["LD_DEBUG"] = "libs", -- 可选：增强动态链接诊断
+        -- },
+        -- initCommands = function()
+        --     return {
+        --         "target create " .. vim.fn.getcwd() .. "/" .. vim.fn.expand("%:t:r"),
+        --         "settings set target.x86-disassembly-flavor intel",--设置汇编格式为Intel
+        --         "register read --all", -- 启动时读取所有寄存器[7,9](@ref)
+        --     }
+        -- end,
     },
     {
         name = "Proj Build and Launch",

@@ -58,70 +58,106 @@ return {
     },
 
     {
-        "rcarriga/nvim-dap-ui",
+        "sakhnik/nvim-gdb",
         event = "VeryLazy",
-        dependencies = {
-            "nvim-neotest/nvim-nio",
-            "mfussenegger/nvim-dap",
-            "theHamsta/nvim-dap-virtual-text",
-        },
         config = function()
-            require("nvim-dap-virtual-text").setup()
-            local dap = require("dap")
-            local dapui = require("dapui")
-            dapui.setup()
-            dap.listeners.after.event_initialized["dapui_config"] = function()
-                dapui.open({reset = true})
-            end
-            dap.listeners.before.event_terminated["dapui_config"] = function()
-                dapui.close()
-            end
-            dap.listeners.before.event_exited["dapui_config"] = function()
-                dapui.close()
-            end
+            require("configs.gdb").setup()
         end,
     },
-    {
-        "jay-babu/mason-nvim-dap.nvim",
-        event = "VeryLazy",
-        dependencies = {
-            "williamboman/mason.nvim",
-            "mfussenegger/nvim-dap",
-        },
-        opts = {
-            handlers = {},
-        },
-    },
-    {
-        "mfussenegger/nvim-dap",
-        config = function()
-            require("configs.dap")
-        end,
-    },
-    {
-        "williamboman/mason.nvim",
-        opts = {
-            ensure_installed = {
-                "codelldb",
-            },
-        },
-    },
+    -- {
+    --     "rcarriga/nvim-dap-ui",
+    --     event = "VeryLazy",
+    --     dependencies = {
+    --         "nvim-neotest/nvim-nio",
+    --         "mfussenegger/nvim-dap",
+    --         "theHamsta/nvim-dap-virtual-text",
+    --     },
+    --     config = function()
+    --         -- require("nvim-dap-virtual-text").setup()
+    --         require("nvim-dap-virtual-text").setup({
+    --             enabled = true,
+    --             display_callback = function(variable, _)
+    --                 if variable.name:match("^%%") then -- 匹配LLDB寄存器格式（如 %rax）
+    --                     return variable.name .. " = " .. variable.value
+    --                 end
+    --             end,
+    --             -- virt_text_pos = 'eol',
+    --         })
+    --         local dap = require("dap")
+    --         local dapui = require("dapui")
+    --         dapui.setup({
+    --             layouts = {
+    --                 {
+    --                     elements = {
+    --                         "scopes",
+    --                         "breakpoints",
+    --                         "stacks",
+    --                         "watches",
+    --                         "disassembly", -- 添加这一行
+    --                     },
+    --                     size = 40,
+    --                     position = "left",
+    --                 },
+    --                 {
+    --                     elements = { "repl", "console" },
+    --                     size = 0.25,
+    --                     position = "bottom",
+    --                 },
+    --             },
+    --         })
+    --         dap.listeners.after.event_initialized["dapui_config"] = function()
+    --             dapui.open({ reset = true })
+    --         end
+    --         dap.listeners.before.event_terminated["dapui_config"] = function()
+    --             dapui.close()
+    --         end
+    --         dap.listeners.before.event_exited["dapui_config"] = function()
+    --             dapui.close()
+    --         end
+    --     end,
+    -- },
+    -- {
+    --     "jay-babu/mason-nvim-dap.nvim",
+    --     event = "VeryLazy",
+    --     dependencies = {
+    --         "williamboman/mason.nvim",
+    --         "mfussenegger/nvim-dap",
+    --     },
+    --     opts = {
+    --         handlers = {},
+    --     },
+    -- },
+    -- {
+    --     "mfussenegger/nvim-dap",
+    --     config = function()
+    --         require("configs.dap")
+    --     end,
+    -- },
+    -- {
+    --     "williamboman/mason.nvim",
+    --     opts = {
+    --         ensure_installed = {
+    --             "codelldb",
+    --         },
+    --     },
+    -- },
 
     {
         "yetone/avante.nvim",
         event = "VeryLazy",
         version = false, -- 永远不要将此值设置为 "*"！永远不要！
         opts = {
-            -- 在此处添加任何选项
-            -- 例如
-            provider = "openai",
-            openai = {
-                endpoint = "https://api.openai.com/v1",
-                model = "gpt-4o", -- 您想要的模型（或使用 gpt-4o 等）
-                timeout = 30000, -- 超时时间（毫秒），增加此值以适应推理模型
-                temperature = 0,
-                max_tokens = 8192, -- 增加此值以包括推理模型的推理令牌
-                --reasoning_effort = "medium", -- low|medium|high，仅用于推理模型
+            providers = {
+                openai = {
+                    endpoint = "https://api.openai.com/v1",
+                    model = "gpt-4o",
+                    timeout = 30000,
+                    extra_request_body = {
+                        temperature = 0,
+                        max_completion_tokens = 8192,
+                        reasoning_effort = "medium", -- low|medium|high, only used for reasoning models
+                    },
+                },
             },
         },
         -- 如果您想从源代码构建，请执行 `make BUILD_FROM_SOURCE=true`
