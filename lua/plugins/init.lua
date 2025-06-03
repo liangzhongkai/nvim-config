@@ -64,83 +64,114 @@ return {
             require("configs.gdb").setup()
         end,
     },
-    -- {
-    --     "rcarriga/nvim-dap-ui",
-    --     event = "VeryLazy",
-    --     dependencies = {
-    --         "nvim-neotest/nvim-nio",
-    --         "mfussenegger/nvim-dap",
-    --         "theHamsta/nvim-dap-virtual-text",
-    --     },
-    --     config = function()
-    --         -- require("nvim-dap-virtual-text").setup()
-    --         require("nvim-dap-virtual-text").setup({
-    --             enabled = true,
-    --             display_callback = function(variable, _)
-    --                 if variable.name:match("^%%") then -- 匹配LLDB寄存器格式（如 %rax）
-    --                     return variable.name .. " = " .. variable.value
-    --                 end
-    --             end,
-    --             -- virt_text_pos = 'eol',
-    --         })
-    --         local dap = require("dap")
-    --         local dapui = require("dapui")
-    --         dapui.setup({
-    --             layouts = {
-    --                 {
-    --                     elements = {
-    --                         "scopes",
-    --                         "breakpoints",
-    --                         "stacks",
-    --                         "watches",
-    --                         "disassembly", -- 添加这一行
-    --                     },
-    --                     size = 40,
-    --                     position = "left",
-    --                 },
-    --                 {
-    --                     elements = { "repl", "console" },
-    --                     size = 0.25,
-    --                     position = "bottom",
-    --                 },
-    --             },
-    --         })
-    --         dap.listeners.after.event_initialized["dapui_config"] = function()
-    --             dapui.open({ reset = true })
-    --         end
-    --         dap.listeners.before.event_terminated["dapui_config"] = function()
-    --             dapui.close()
-    --         end
-    --         dap.listeners.before.event_exited["dapui_config"] = function()
-    --             dapui.close()
-    --         end
-    --     end,
-    -- },
-    -- {
-    --     "jay-babu/mason-nvim-dap.nvim",
-    --     event = "VeryLazy",
-    --     dependencies = {
-    --         "williamboman/mason.nvim",
-    --         "mfussenegger/nvim-dap",
-    --     },
-    --     opts = {
-    --         handlers = {},
-    --     },
-    -- },
-    -- {
-    --     "mfussenegger/nvim-dap",
-    --     config = function()
-    --         require("configs.dap")
-    --     end,
-    -- },
-    -- {
-    --     "williamboman/mason.nvim",
-    --     opts = {
-    --         ensure_installed = {
-    --             "codelldb",
-    --         },
-    --     },
-    -- },
+    {
+        "rcarriga/nvim-dap-ui",
+        event = "VeryLazy",
+        dependencies = {
+            "nvim-neotest/nvim-nio",
+            "mfussenegger/nvim-dap",
+            "theHamsta/nvim-dap-virtual-text",
+        },
+        config = function()
+            -- require("nvim-dap-virtual-text").setup()
+            require("nvim-dap-virtual-text").setup({
+                enabled = true,
+                display_callback = function(variable, _)
+                    if variable.name:match("^%%") then -- 匹配LLDB寄存器格式（如 %rax）
+                        return variable.name .. " = " .. variable.value
+                    end
+                end,
+                -- virt_text_pos = 'eol',
+            })
+            local dap = require("dap")
+            local dapui = require("dapui")
+            dapui.setup({
+                layouts = {
+                    {
+                        elements = {
+                            -- 左侧边栏
+                            {
+                                id = "scopes",
+                                size = 0.3, -- 占左侧高度的30%
+                            },
+                            {
+                                id = "stacks",
+                                size = 0.4, -- 占左侧高度的40%
+                            },
+                            {
+                                id = "watches",
+                                size = 0.3, -- 占左侧高度的30%
+                            },
+                        },
+                        size = 0.3, -- 左侧边栏占总宽度的30%
+                        position = "left", -- 位于左侧
+                    },
+                    {
+                        elements = {
+                            -- 底部面板
+                            {
+                                id = "repl",
+                                size = 0.5, -- 占底部高度的50%
+                            },
+                            {
+                                id = "console",
+                                size = 0.5, -- 占底部高度的50%
+                            },
+                        },
+                        size = 0.2, -- 底部面板占总高度的20%
+                        position = "bottom", -- 位于底部
+                    },
+                },
+            })
+            dap.listeners.after.event_initialized["dapui_config"] = function()
+                dapui.open({ reset = true })
+            end
+            -- 当DAP终止或退出时，自动关闭DAP UI 和 汇编分屏
+            local function close_dap_windows()
+                dapui.close()
+                -- 关闭自定义汇编分屏
+                dap.close_custom_disasm_window()
+            end
+            dap.listeners.before.event_terminated["dapui_config"] =
+                close_dap_windows
+            dap.listeners.before.event_exited["dapui_config"] =
+                close_dap_windows
+            -- dap.listeners.before.event_terminated["dapui_config"] = function()
+            --     dapui.close()
+            -- end
+            -- dap.listeners.before.event_exited["dapui_config"] = function()
+            --     dapui.close()
+            -- end
+            dap.listeners.after.event_stopped["show_disasm"] = function()
+                vim.cmd("DapDisasm")
+            end
+        end,
+    },
+    {
+        "jay-babu/mason-nvim-dap.nvim",
+        event = "VeryLazy",
+        dependencies = {
+            "williamboman/mason.nvim",
+            "mfussenegger/nvim-dap",
+        },
+        opts = {
+            handlers = {},
+        },
+    },
+    {
+        "mfussenegger/nvim-dap",
+        config = function()
+            require("configs.dap")
+        end,
+    },
+    {
+        "williamboman/mason.nvim",
+        opts = {
+            ensure_installed = {
+                "codelldb",
+            },
+        },
+    },
 
     {
         "yetone/avante.nvim",

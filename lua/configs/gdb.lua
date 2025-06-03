@@ -42,7 +42,7 @@ function M.start_debug()
         else
             print("Failed to start debug session")
         end
-    end, 2000)
+    end, 500)
 end
 
 -- 设置调试布局 - 修复版本
@@ -61,7 +61,7 @@ end
 -- 创建调试布局 - 修复版本
 function M.create_layout_fixed()
     vim.cmd("wincmd k") -- 确保移动到上方窗口
-    vim.cmd("GdbCreateWatch disas")
+    vim.cmd("GdbCreateWatch  disas  $pc-32, $pc+64")
     vim.cmd("wincmd j") -- 确保移动到下方窗口
     vim.cmd("GdbCreateWatch info stack")
     vim.cmd("GdbCreateWatch info locals")

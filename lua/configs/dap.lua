@@ -164,6 +164,165 @@ dap.configurations.cpp = {
     },
 }
 
+-- ============================
+-- 🧩 DapDisasm 汇编浮窗功能
+-- ============================
+-- 用于存储汇编窗口和缓冲区的ID
+local custom_disasm_win_id = nil
+local custom_disasm_buf_id = nil
+vim.api.nvim_create_user_command("DapDisasm", function()
+    local dap = require("dap")
+
+    local session = dap.session()
+    if not session then
+        vim.notify("No active debug session", vim.log.levels.WARN)
+        return
+    end
+
+    local frame = dap.session().current_frame
+    if not frame then
+        vim.notify("No current frame", vim.log.levels.WARN)
+        return
+    end
+
+    local addr = frame.instructionPointerReference
+        or frame.instructionPointer
+        or frame.pc
+    if not addr then
+        vim.notify("No instruction pointer available", vim.log.levels.WARN)
+        return
+    end
+
+    session:request("disassemble", {
+        memoryReference = addr,
+        instructionOffset = -20,
+        instructionCount = 50,
+        resolveSymbols = true,
+    }, function(err, response)
+        if err then
+            vim.notify(
+                "Disassemble request failed: " .. err.message,
+                vim.log.levels.ERROR
+            )
+            return
+        end
+
+        local asm_lines = {}
+        local current_line = 1 -- fallback: default to first line
+        local pc_addr = addr:lower()
+
+        for i, ins in ipairs(response.instructions or {}) do
+            local line =
+                string.format("0x%s:\t%s", ins.address, ins.instruction)
+            table.insert(asm_lines, line)
+
+            if ins.address:lower() == pc_addr then
+                current_line = i
+            end
+        end
+
+        local existing_buf
+        for _, b in ipairs(vim.api.nvim_list_bufs()) do
+            if
+                vim.fn.fnamemodify(vim.api.nvim_buf_get_name(b), ":t")
+                == "DapDisasm"
+            then
+                existing_buf = b
+                break
+            end
+        end
+
+        local buf
+        local asm_win
+        local current_win = vim.api.nvim_get_current_win() -- 记录当前窗口，后面切回去
+
+        if existing_buf then
+            buf = existing_buf
+            -- 找到显示该 buffer 的窗口
+            for _, w in ipairs(vim.api.nvim_list_wins()) do
+                if vim.api.nvim_win_get_buf(w) == buf then
+                    asm_win = w
+                    break
+                end
+            end
+            if not asm_win then
+                -- buffer 存在，但没窗口显示，则新开一个竖分窗口
+                vim.cmd("vsplit")
+                asm_win = vim.api.nvim_get_current_win()
+            end
+
+            -- 切到这个窗口，清空内容
+            vim.api.nvim_set_current_win(asm_win)
+            vim.bo[buf].modifiable = true
+            vim.api.nvim_buf_set_lines(buf, 0, -1, false, {})
+        else
+            -- 新建 buffer 和窗口
+            buf = vim.api.nvim_create_buf(false, true)
+            vim.cmd("vsplit")
+            asm_win = vim.api.nvim_get_current_win()
+            vim.api.nvim_win_set_buf(asm_win, buf)
+        end
+
+        -- 存储窗口和缓冲区的ID
+        custom_disasm_win_id = asm_win
+        custom_disasm_buf_id = buf
+
+        -- 写入新汇编内容
+        vim.api.nvim_buf_set_lines(buf, 0, -1, false, asm_lines)
+
+        -- 高亮当前行（设置 extmark）
+        local ns = vim.api.nvim_create_namespace("DapDisasmHighlight")
+        vim.api.nvim_buf_clear_namespace(buf, ns, 0, -1)
+        vim.api.nvim_set_hl(0, "DapPCLine", { bg = "#3c3836" })
+        vim.api.nvim_buf_set_extmark(buf, ns, current_line - 1, 0, {
+            -- virt_text = { { "← PC", "Comment" } },
+            -- virt_text_pos = "eol",
+            virt_text = { { "-→  ", "DiagnosticHint" } }, -- 你可以换成 "← PC" 等
+            virt_text_pos = "overlay", -- 覆盖显示在该列（而非 eol）
+            hl_group = "DapPCLine",
+            line_hl_group = "DapPCLine",
+            priority = 1000,
+        })
+
+        -- 将current_line显示在中间
+        vim.api.nvim_win_set_cursor(asm_win, { current_line, 0 })
+        vim.cmd("normal! zz")
+
+        -- buffer 选项
+        vim.bo[buf].buftype = "nofile"
+        vim.bo[buf].bufhidden = "wipe"
+        vim.bo[buf].swapfile = false
+        vim.bo[buf].filetype = "asm"
+        vim.bo[buf].modifiable = false
+
+        if vim.api.nvim_buf_get_name(buf) == "" then
+            vim.api.nvim_buf_set_name(buf, "DapDisasm")
+        end
+
+        -- 切回原窗口，保持光标不变
+        vim.api.nvim_set_current_win(current_win)
+    end)
+end, {})
+-- 定义一个函数来关闭自定义汇编窗口
+dap.close_custom_disasm_window = function()
+    vim.notify("close_custom_disasm_window called", vim.log.levels.WARN)
+    if
+        custom_disasm_win_id and vim.api.nvim_win_is_valid(custom_disasm_win_id)
+    then
+        vim.api.nvim_win_close(custom_disasm_win_id, true) -- true 表示强制关闭
+        custom_disasm_win_id = nil -- 清除存储的ID
+        -- 因为 buftype = "nofile" 和 bufhidden = "wipe"，通常缓冲区会随窗口关闭而删除
+        -- 但为了确保，也可以尝试删除缓冲区
+        if
+            custom_disasm_buf_id
+            and vim.api.nvim_buf_is_valid(custom_disasm_buf_id)
+        then
+            vim.api.nvim_buf_delete(custom_disasm_buf_id, {})
+            custom_disasm_buf_id = nil
+        end
+    end
+end
+
 -- gdb
 -- dap.adapters.gdb = {
 --     type = "executable",
