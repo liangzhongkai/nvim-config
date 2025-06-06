@@ -178,6 +178,12 @@ return {
         event = "VeryLazy",
         version = false, -- 永远不要将此值设置为 "*"！永远不要！
         opts = {
+            provider = "deepseek",
+            mappings = {
+                ask = "<leader>ua", -- ask
+                edit = "<leader>ue", -- edit
+                refresh = "<leader>ur", -- refresh
+            },
             providers = {
                 openai = {
                     endpoint = "https://api.openai.com/v1",
@@ -188,6 +194,18 @@ return {
                         max_completion_tokens = 8192,
                         reasoning_effort = "medium", -- low|medium|high, only used for reasoning models
                     },
+                },
+                deepseek = {
+                    __inherited_from = "openai",
+                    api_key_name = "DEEPSEEK_API_KEY",
+                    endpoint = "https://api.deepseek.com",
+                    model = "deepseek-coder",
+                },
+                qianwen = {
+                    __inherited_from = "openai",
+                    api_key_name = "",
+                    endpoint = "https://dashscope.aliyuncs.com/compatible-mode/v1",
+                    model = "qwen-coder-plus-latest",
                 },
             },
         },
@@ -226,10 +244,30 @@ return {
             {
                 -- 如果您有 lazy=true，请确保正确设置
                 "MeanderingProgrammer/render-markdown.nvim",
+                dependencies = { "nvim-treesitter/nvim-treesitter" },
                 opts = {
                     file_types = { "markdown", "Avante" },
                 },
                 ft = { "markdown", "Avante" },
+                -- config = function()
+                --     vim.api.nvim_create_autocmd("LspAttach", {
+                --         callback = function(args)
+                --             local buf = args.buf
+                --             local ft = vim.bo[buf].filetype -- ✅ Modern API
+                --             if ft == "markdown" or ft == "Avante" then
+                --                 vim.defer_fn(function()
+                --                     local ok, rm =
+                --                         pcall(require, "render-markdown")
+                --                     if ok and rm and rm.render then
+                --                         vim.schedule(function()
+                --                             rm.render()
+                --                         end)
+                --                     end
+                --                 end, 100)
+                --             end
+                --         end,
+                --     })
+                -- end,
             },
         },
     },

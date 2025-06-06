@@ -35,12 +35,10 @@ dap.configurations.cpp = {
             local src = vim.fn.expand("%:t")
             -- local output = vim.fn.expand("%:t:r")
             -- 自动编译当前目录下的 main.cpp
-            local output = vim.fn.getcwd() .. "/" .. vim.fn.expand("%:t:r")
-            -- local output = vim.fn.input(
-            --     "🔧 Output executable path: ",
-            --     vim.fn.getcwd() .. "/",
-            --     "file"
-            -- )
+            local output = vim.fn.input("🔧 Output executable path: ")
+            if output == "" then
+                output = vim.fn.getcwd() .. "/" .. vim.fn.expand("%:t:r")
+            end
 
             -- 编译命令（你可以按需替换）
             local compile_cmd = "g++ -g -std=c++2a -O0 "
@@ -113,15 +111,45 @@ dap.configurations.cpp = {
         args = {},
     },
     {
-        name = "Proj Launch Debug",
+        name = "Test File Launch Debug",
         type = "codelldb",
         request = "launch",
         program = function()
-            return vim.fn.input(
-                "Path to executable: ",
-                vim.fn.getcwd() .. "/",
-                "file"
-            )
+            local output = vim.fn.input("🔧 Output executable path: ")
+            if output == "" then
+                output = vim.fn.getcwd() .. "/" .. vim.fn.expand("%:t:r")
+            end
+            _dap_last_cpp_program_path = output
+            return output
+        end,
+        cwd = function()
+            -- 如果全局变量存在，我们使用它
+            local path = _dap_last_cpp_program_path
+            if not path then
+                -- 如果全局变量不存在，说明program函数还没有被调用，我们提示用户
+                path = vim.fn.input("🔧 Output executable path (for cwd): ")
+                if path == "" then
+                    path = vim.fn.getcwd() .. "/" .. vim.fn.expand("%:t:r")
+                end
+                _dap_last_cpp_program_path = path
+            end
+            -- 提取目录部分
+            return vim.fn.fnamemodify(path, ":h")
+        end,
+        -- cwd = "${workspaceFolder}",
+        -- stopOnEntry = true, -- cause coredump in ld-x86_64...so
+        args = {},
+    },
+    {
+        name = "File Launch Debug",
+        type = "codelldb",
+        request = "launch",
+        program = function()
+            local output = vim.fn.input("🔧 Output executable path: ")
+            if output == "" then
+                output = vim.fn.getcwd() .. "/" .. vim.fn.expand("%:t:r")
+            end
+            return output
         end,
         cwd = "${workspaceFolder}",
         -- stopOnEntry = true, -- cause coredump in ld-x86_64...so
