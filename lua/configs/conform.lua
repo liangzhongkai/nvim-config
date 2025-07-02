@@ -12,15 +12,24 @@ local options = {
     formatters = {
         -- C & C++
         ["clang-format"] = {
+            -- prepend_args = {
+            --     "-style={ \
+            --             IndentWidth: 4, \
+            --             TabWidth: 4, \
+            --             UseTab: Never, \
+            --             SpacesBeforeTrailingComments: 2, \
+            --             AlignTrailingComments: true, \
+            --             AccessModifierOffset: 0, \
+            --             IndentAccessModifiers: true, \
+            --             PackConstructorInitializers: Never}",
+            -- },
             prepend_args = {
-                "-style={ \
-                        IndentWidth: 4, \
-                        TabWidth: 4, \
-                        UseTab: Never, \
-                        AccessModifierOffset: 0, \
-                        IndentAccessModifiers: true, \
-                        PackConstructorInitializers: Never}",
+                "-style=file", -- 1. 先尝试项目目录的 .clang-format
+                -- -style=file:~/.config/clang-format/global_format
+                "-fallback-style=google", -- 2. 失败时回退 Google 风格
+                "--assume-filename=$FILENAME", -- 确保文件类型识别
             },
+            stdin = true, -- 通过 stdin 传递代码
         },
         -- Golang
         ["goimports-reviser"] = {

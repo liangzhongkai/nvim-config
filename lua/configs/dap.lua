@@ -35,17 +35,31 @@ dap.configurations.cpp = {
             local src = vim.fn.expand("%:t")
             -- local output = vim.fn.expand("%:t:r")
             -- 自动编译当前目录下的 main.cpp
-            local output = vim.fn.input("🔧 Output executable path: ")
+            local output = vim.fn.input("🔧 executable path: ")
             if output == "" then
                 output = vim.fn.getcwd() .. "/" .. vim.fn.expand("%:t:r")
             end
-
+            local args = vim.fn.input("🔧 c++ version: ")
             -- 编译命令（你可以按需替换）
-            local compile_cmd = "g++ -g -std=c++2a -O0 "
-                .. " -W -Wall -Werror -Wextra -Wno-unused-parameter -lpthread -lbenchmark -fcoroutines "
+            local compile_cmd = "g++ -g -O3 -std=c++"
+                .. args
+                .. "  "
                 .. src
                 .. " -o "
                 .. output
+            if args == "" then
+                -- 编译命令（你可以按需替换）
+                -- compile_cmd = "g++ -g -std=c++2a -O3 "
+                --     .. " -W -Wall -Werror -Wextra -Wno-unused-parameter -lpthread -lbenchmark -fcoroutines "
+                --     .. src
+                --     .. " -o "
+                --     .. output
+                compile_cmd = "g++ -g -std=c++17 "
+                    .. src
+                    .. " -o "
+                    .. output
+            end
+
             print("[DAP] Compiling with: " .. compile_cmd)
             local result = os.execute(compile_cmd)
 
@@ -111,7 +125,7 @@ dap.configurations.cpp = {
         args = {},
     },
     {
-        name = "Test File Launch Debug",
+        name = "Exe Launch Debug",
         type = "codelldb",
         request = "launch",
         program = function()
@@ -141,7 +155,7 @@ dap.configurations.cpp = {
         args = {},
     },
     {
-        name = "File Launch Debug",
+        name = "Exe Current Launch Debug",
         type = "codelldb",
         request = "launch",
         program = function()

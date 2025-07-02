@@ -7,9 +7,12 @@ local map = vim.keymap.set
 map({ "n" }, "la", "<cmd>ReloadAll<CR>", { desc = "刷新文件" })
 map("n", ";", ":", { desc = "CMD enter command mode" })
 map("i", "jk", "<ESC>", { desc = "快速退出插入模式" })
-map({ "n", "i", "v" }, "<C-s>", "<cmd> w <cr>")
+map({ "n", "i", "v" }, "<C-s>", "<cmd> w <cr>", { desc = "save file" })
+map("n", "<C-I>", "<Cmd>lua vim.cmd('normal! <C-I>')<CR>", { desc = "go to next jump position", noremap = true })
+map("n", "<C-O>", "<Cmd>lua vim.cmd('normal! <C-O>')<CR>", { desc = "go to last jump position", noremap = true })
 
 map("n", "<leader>ai", "<cmd>ChatGPT<CR>", { desc = "打开 AI 助手" })
+-- map('n', '<leader>si', ':lua SearchInclude("my_function")<CR>', { desc = "绑定快捷键" })
 
 map({ "t" }, "vsp", "vsplit<CR>", { desc = "水平分屏" })
 map({ "t" }, "sp", "split<CR>", { desc = "垂直分屏" })
@@ -20,7 +23,9 @@ map("n", "<leader>zo", "zR", { desc = "展开所有" })
 map("n", "<leader>zc", "zM", { desc = "收起所有" })
 
 map('n', '<leader>h', "<cmd>let @/='\\<'.expand('<cword>').'\\>'<CR>:set hlsearch<CR>",
-    {silent = true, desc = "highline word"})
+    {silent = true, desc = "高亮"})
+
+-- map("n", "<Leader>ca", "<Cmd>lua require('lsp-actions').code_action()<CR>", { desc = "修复代码" })
 
 map({ "n", "i", "v" }, "<C-z>", "<cmd> undo <cr>", { desc = "history undo" })
 map({ "n", "i", "v" }, "<C-y>", "<cmd> redo <cr>", { desc = "history redo" })

@@ -19,6 +19,12 @@ lint.linters.luacheck.args = {
     "-",
 }
 
+lint.linters.cpplint.args = {
+    "--filter=-whitespace/indent,-build/include_subdir,-readability/braces", -- 忽略缩进、头文件路径、大括号检查
+    -- "--linelength=120",  -- 与 .clang-format 一致
+    "--quiet", -- 减少输出噪音
+}
+
 -- -- 定义 TscanCode 的 Linter 配置
 -- lint.linters.tscancode = {
 --     cmd = "/usr/local/bin/tscancode", -- 若未加入 PATH，需替换为绝对路径（如 "/path/to/tscancode"）

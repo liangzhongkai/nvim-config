@@ -214,7 +214,6 @@ return {
         -- build = "powershell -ExecutionPolicy Bypass -File Build.ps1 -BuildFromSource false" -- 对于 Windows
         dependencies = {
             "nvim-treesitter/nvim-treesitter",
-            "stevearc/dressing.nvim",
             "nvim-lua/plenary.nvim",
             "MunifTanjim/nui.nvim",
             --- 以下依赖项是可选的，
@@ -222,6 +221,8 @@ return {
             "nvim-telescope/telescope.nvim", -- 用于文件选择器提供者 telescope
             "hrsh7th/nvim-cmp", -- avante 命令和提及的自动完成
             "ibhagwan/fzf-lua", -- 用于文件选择器提供者 fzf
+            "stevearc/dressing.nvim", -- for input provider dressing
+            "folke/snacks.nvim", -- for input provider snacks
             "nvim-tree/nvim-web-devicons", -- 或 echasnovski/mini.icons
             "zbirenbaum/copilot.lua", -- 用于 providers='copilot'
             {
